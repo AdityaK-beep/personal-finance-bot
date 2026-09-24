@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Personal Finance Advisor Bot{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+  <div>
+    <h1 class="h2 fw-bold mb-1">Financial Dashboard</h1>
+    <p class="text-muted small mb-0">Overview for <strong>{{ data.month_name }} {{ data.year }}</strong></p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('dashboard.tracker_view') }}" class="btn btn-secondary-custom btn-sm d-flex align-items-center gap-2">
+      <span>➕ Manage Transactions</span>
+    </a>
+    <a href="{{ url_for('ai.ai_insights_view') }}" class="btn btn-primary-custom btn-sm d-flex align-items-center gap-2">
+      <span>✨ Full AI Advisory</span>
+    </a>
+  </div>
+</div>
+
+<!-- Four KPI Cards -->
+<div class="row g-3 mb-4">
+  <!-- Monthly Income -->
+  <div class="col-12 col-sm-6 col-xl-3">
+    <div class="kpi-card kpi-income">
+      <div class="kpi-title">Monthly Income</div>
+      <div class="kpi-value">₹{{ "{:,.2f}".format(data.monthly_income) }}</div>
+      <div class="kpi-badge" style="background: rgba(52, 211, 153, 0.15); color: #34d399;">
+        <span>↑ Inflows</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Monthly Expenses -->
+  <div class="col-12 col-sm-6 col-xl-3">
+    <div class="kpi-card kpi-expense">
+      <div class="kpi-title">Monthly Expenses</div>
+      <div class="kpi-value">₹{{ "{:,.2f}".format(data.monthly_expenses) }}</div>
+      <div class="kpi-badge" style="background: rgba(248, 113, 113, 0.15); color: #f87171;">
+        <span>↓ Outflows</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Net Balance -->
+  <div class="col-12 col-sm-6 col-xl-3">
+    <div class="kpi-card kpi-balance">
+      <div class="kpi-title">Net Balance</div>
+      <div class="kpi-value">₹{{ "{:,.2f}".format(data.net_balance) }}</div>
+      <div class="kpi-badge" style="background: {{ 'rgba(56, 189, 248, 0.15)' if data.net_balance >= 0 else 'rgba(239, 68, 68, 0.15)' }}; color: {{ '#38bdf8' if data.net_balance >= 0 else '#f87171' }};">
+        <span>{{ 'Surplus' if data.net_balance >= 0 else 'Deficit' }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Savings Rate -->
+  <div class="col-12 col-sm-6 col-xl-3">
+    <div class="kpi-card kpi-rate">
+      <div class="kpi-title">Savings Rate</div>
+      <div class="kpi-value">{{ "{:.1f}".format(data.savings_rate) }}%</div>
+      <div class="kpi-badge" style="background: rgba(167, 139, 250, 0.15); color: #a78bfa;">
+        <span>Target: {{ "{:.0f}".format(data.target_savings_rate) }}%</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Quick AI Recommendation Banner -->
+<div class="glass-card p-3 mb-4 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3" style="border-left: 4px solid var(--accent);">
+  <div class="d-flex align-items-center gap-3">
+    <div style="font-size: 1.8rem;">💡</div>
+    <div>
+      <h6 class="fw-bold mb-1 text-light">AI Pulse Check</h6>
+      <p class="text-muted small mb-0">{{ quick_insight }}</p>
+    </div>
+  </div>
+  <a href="{{ url_for('ai.ai_insights_view') }}" class="btn btn-secondary-custom btn-sm text-nowrap align-self-start align-self-md-center">
+    View In-Depth Analysis →
+  </a>
+</div>
+
+<!-- Middle Section: Chart and Budget Progress -->
+<div class="row g-4 mb-4">
+  <!-- Expense Distribution Chart -->
+  <div class="col-12 col-lg-7">
+    <div class="glass-card h-100">
+      <div class="card-header-clean">
+        <span>Expense Distribution</span>
+        <small class="text-muted fw-normal">By Category</small>
+      </div>
+      <div class="p-4 d-flex align-items-center justify-content-center" style="min-height: 280px;">
+        <div style="position: relative; width: 100%; height: 260px;">
+          <canvas id="categoryExpenseChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Budget Progress & Targets -->
+  <div class="col-12 col-lg-5">
+    <div class="glass-card h-100 d-flex flex-column">
+      <div class="card-header-clean">
+        <span>Monthly Budget Status</span>
+        <a href="{{ url_for('dashboard.tracker_view') }}" class="text-decoration-none small text-accent">Edit Goal</a>
+      </div>
+      <div class="p-4 flex-grow-1 d-flex flex-column justify-content-between">
+        {% if data.monthly_budget > 0 %}
+          <div>
+            <div class="d-flex justify-content-between align-items-baseline mb-2">
+              <span class="text-muted small">Current Spending vs Budget Limit</span>
+              <span class="fw-bold fs-6">
+                ₹{{ "{:,.2f}".format(data.monthly_expenses) }} / ₹{{ "{:,.2f}".format(data.monthly_budget) }}
+              </span>
+            </div>
+
+            <!-- Progress Bar clamped visually to 100% -->
+            {% set clamped_pct = data.budget_utilization if data.budget_utilization <= 100 else 100 %}
+            <div class="progress-custom mb-3">
+              <div 
+                class="progress-bar-custom {{ 'progress-bar-warning' if data.budget_utilization > 85 else '' }}" 
+                role="progressbar" 
+                style="width: {{ clamped_pct }}%;" 
+                aria-valuenow="{{ data.budget_utilization }}" 
+                aria-valuemin="0" 
+                aria-valuemax="100"
+              ></div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mb-4">
+              <span class="text-muted small">Budget Utilization</span>
+              <span class="badge {{ 'bg-danger' if data.budget_utilization > 100 else ('bg-warning text-dark' if data.budget_utilization > 80 else 'bg-success') }}">
+                {{ "{:.1f}".format(data.budget_utilization) }}%
+              </span>
+            </div>
+
+            {% if data.budget_utilization > 100 %}
+              <div class="alert alert-danger-custom p-2 small mb-0">
+                ⚠️ You have exceeded your monthly budget ceiling by ₹{{ "{:,.2f}".format(data.monthly_expenses - data.monthly_budget) }}.
+              </div>
+            {% else %}
+              <div class="alert alert-info-custom p-2 small mb-0">
+                ✅ You have ₹{{ "{:,.2f}".format(data.monthly_budget - data.monthly_expenses) }} remaining in your monthly budget.
+              </div>
+            {% endif %}
+          </div>
+        {% else %}
+          <div class="text-center py-4 my-auto">
+            <p class="text-muted small mb-3">No monthly budget limit has been set yet.</p>
+            <a href="{{ url_for('dashboard.tracker_view') }}" class="btn btn-secondary-custom btn-sm">
+              Set Monthly Budget Limit
+            </a>
+          </div>
+        {% endif %}
+
+        <!-- Savings Target Comparison -->
+        <div class="mt-4 pt-3 border-top border-secondary border-opacity-25">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <div class="text-muted small">Target Savings Rate</div>
+              <div class="fw-bold">{{ "{:.1f}".format(data.target_savings_rate) }}% of Income</div>
+            </div>
+            <div class="text-end">
+              <div class="text-muted small">Actual Savings Rate</div>
+              <div class="fw-bold {{ 'text-success' if data.savings_rate >= data.target_savings_rate else 'text-warning' }}">
+                {{ "{:.1f}".format(data.savings_rate) }}%
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bottom Section: Recent Transactions (10 Latest) -->
+<div class="glass-card mb-4">
+  <div class="card-header-clean">
+    <span>Recent Transactions</span>
+    <a href="{{ url_for('dashboard.tracker_view') }}" class="text-decoration-none small text-accent">View All & Manage</a>
+  </div>
+  <div class="table-responsive">
+    <table class="table-custom">
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Category / Source</th>
+          <th>Date</th>
+          <th class="text-end">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if data.recent_transactions %}
+          {% for tx in data.recent_transactions %}
+            <tr>
+              <td>
+                {% if tx.type == 'income' %}
+                  <span class="badge-income">Income</span>
+                {% else %}
+                  <span class="badge-expense">Expense</span>
+                {% endif %}
+              </td>
+              <td class="fw-semibold">{{ tx.description }}</td>
+              <td>
+                <span class="badge-category">{{ tx.category_or_source }}</span>
+              </td>
+              <td class="text-muted small">{{ tx.date }}</td>
+              <td class="text-end fw-bold {{ 'text-success' if tx.type == 'income' else 'text-danger' }}">
+                {{ '+' if tx.type == 'income' else '-' }}₹{{ "{:,.2f}".format(tx.amount) }}
+              </td>
+            </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="5" class="text-center py-4 text-muted">
+              No transactions recorded yet. <a href="{{ url_for('dashboard.tracker_view') }}" class="text-accent text-decoration-none">Add your first transaction</a>.
+            </td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const labels = {{ chart_labels_json|safe }};
+    const values = {{ chart_values_json|safe }};
+    initExpenseChart('categoryExpenseChart', labels, values);
+  });
+</script>
+{% endblock %}
