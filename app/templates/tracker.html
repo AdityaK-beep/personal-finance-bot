@@ -1,0 +1,276 @@
+{% extends "base.html" %}
+
+{% block title %}Tracker - Personal Finance Advisor Bot{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+  <div>
+    <h1 class="h2 fw-bold mb-1">Financial Tracker</h1>
+    <p class="text-muted small mb-0">Record new inflows, outflows, and configure monthly budget targets.</p>
+  </div>
+  <div>
+    <a href="{{ url_for('dashboard.dashboard_view') }}" class="btn btn-secondary-custom btn-sm">
+      ← Back to Dashboard
+    </a>
+  </div>
+</div>
+
+<!-- Forms Row: Add Income, Add Expense, Set Budget -->
+<div class="row g-4 mb-4">
+  <!-- Add Income Card -->
+  <div class="col-12 col-lg-4">
+    <div class="glass-card h-100">
+      <div class="card-header-clean">
+        <span class="text-success fw-bold">➕ Record Income</span>
+      </div>
+      <div class="p-3 p-md-4">
+        <form method="POST" action="{{ url_for('dashboard.add_income') }}">
+          <div class="mb-3">
+            <label for="income_source" class="form-label form-label-custom">Source / Employer</label>
+            <input 
+              type="text" 
+              class="form-control form-control-custom" 
+              id="income_source" 
+              name="source" 
+              placeholder="e.g. Salary, Freelance, Dividend" 
+              required 
+              maxlength="100"
+            >
+          </div>
+          <div class="mb-3">
+            <label for="income_amount" class="form-label form-label-custom">Amount (₹)</label>
+            <input 
+              type="number" 
+              step="0.01" 
+              min="0.01" 
+              class="form-control form-control-custom" 
+              id="income_amount" 
+              name="amount" 
+              placeholder="50000.00" 
+              required
+            >
+          </div>
+          <div class="mb-3">
+            <label for="income_date" class="form-label form-label-custom">Date</label>
+            <input 
+              type="date" 
+              class="form-control form-control-custom" 
+              id="income_date" 
+              name="date" 
+              value="{{ today_date }}" 
+              required
+            >
+          </div>
+          <button type="submit" class="btn btn-primary-custom w-100">
+            Save Income
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Expense Card -->
+  <div class="col-12 col-lg-4">
+    <div class="glass-card h-100">
+      <div class="card-header-clean">
+        <span class="text-danger fw-bold">➖ Record Expense</span>
+      </div>
+      <div class="p-3 p-md-4">
+        <form method="POST" action="{{ url_for('dashboard.add_expense') }}">
+          <div class="mb-3">
+            <label for="expense_title" class="form-label form-label-custom">Description / Payee</label>
+            <input 
+              type="text" 
+              class="form-control form-control-custom" 
+              id="expense_title" 
+              name="title" 
+              placeholder="e.g. Grocery Store, Metro Pass" 
+              required 
+              maxlength="120"
+            >
+          </div>
+          <div class="mb-3">
+            <label for="expense_amount" class="form-label form-label-custom">Amount (₹)</label>
+            <input 
+              type="number" 
+              step="0.01" 
+              min="0.01" 
+              class="form-control form-control-custom" 
+              id="expense_amount" 
+              name="amount" 
+              placeholder="1200.00" 
+              required
+            >
+          </div>
+          <div class="mb-3">
+            <label for="expense_category" class="form-label form-label-custom">Category</label>
+            <select class="form-select form-select-custom" id="expense_category" name="category" required>
+              {% for cat in allowed_categories %}
+                <option value="{{ cat }}">{{ cat }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="expense_date" class="form-label form-label-custom">Date</label>
+            <input 
+              type="date" 
+              class="form-control form-control-custom" 
+              id="expense_date" 
+              name="date" 
+              value="{{ today_date }}" 
+              required
+            >
+          </div>
+          <button type="submit" class="btn btn-primary-custom w-100">
+            Save Expense
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Set Budget Goals Card -->
+  <div class="col-12 col-lg-4">
+    <div class="glass-card h-100">
+      <div class="card-header-clean">
+        <span class="text-info fw-bold">🎯 Budget & Savings Goal</span>
+      </div>
+      <div class="p-3 p-md-4">
+        <form method="POST" action="{{ url_for('dashboard.set_budget') }}">
+          <div class="mb-3">
+            <label for="monthly_limit" class="form-label form-label-custom">Monthly Budget Limit (₹)</label>
+            <input 
+              type="number" 
+              step="0.01" 
+              min="0" 
+              class="form-control form-control-custom" 
+              id="monthly_limit" 
+              name="monthly_limit" 
+              value="{{ budget_goal.monthly_limit if budget_goal else '0.00' }}" 
+              placeholder="35000.00" 
+              required
+            >
+            <small class="text-muted" style="font-size: 0.75rem;">Set to 0 to disable active budget ceiling.</small>
+          </div>
+          <div class="mb-3">
+            <label for="target_savings_rate" class="form-label form-label-custom">Target Savings Rate (%)</label>
+            <input 
+              type="number" 
+              step="0.1" 
+              min="0" 
+              max="100" 
+              class="form-control form-control-custom" 
+              id="target_savings_rate" 
+              name="target_savings_rate" 
+              value="{{ budget_goal.target_savings_rate if budget_goal else '20.0' }}" 
+              placeholder="20.0" 
+              required
+            >
+            <small class="text-muted" style="font-size: 0.75rem;">Standard 50/30/20 target is 20%.</small>
+          </div>
+          <div class="mt-4 pt-2">
+            <button type="submit" class="btn btn-secondary-custom w-100">
+              Save Budget Preferences
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Transaction Tables Row -->
+<div class="row g-4 mb-4">
+  <!-- Incomes Table -->
+  <div class="col-12 col-lg-6">
+    <div class="glass-card h-100">
+      <div class="card-header-clean">
+        <span class="text-success fw-bold">Income History</span>
+        <span class="badge bg-success-subtle text-success">{{ incomes|length }} records</span>
+      </div>
+      <div class="table-responsive" style="max-height: 480px; overflow-y: auto;">
+        <table class="table-custom">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Source</th>
+              <th class="text-end">Amount</th>
+              <th class="text-center" style="width: 70px;">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if incomes %}
+              {% for inc in incomes %}
+                <tr>
+                  <td class="text-muted small">{{ inc.date }}</td>
+                  <td class="fw-semibold">{{ inc.source }}</td>
+                  <td class="text-end text-success fw-bold">+₹{{ "{:,.2f}".format(inc.amount) }}</td>
+                  <td class="text-center">
+                    <form method="POST" action="{{ url_for('dashboard.delete_income', id=inc.id) }}" class="form-delete-confirm m-0">
+                      <button type="submit" class="btn btn-danger-sm" title="Delete record">✕</button>
+                    </form>
+                  </td>
+                </tr>
+              {% endfor %}
+            {% else %}
+              <tr>
+                <td colspan="4" class="text-center py-4 text-muted small">
+                  No income entries logged yet.
+                </td>
+              </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Expenses Table -->
+  <div class="col-12 col-lg-6">
+    <div class="glass-card h-100">
+      <div class="card-header-clean">
+        <span class="text-danger fw-bold">Expense History</span>
+        <span class="badge bg-danger-subtle text-danger">{{ expenses|length }} records</span>
+      </div>
+      <div class="table-responsive" style="max-height: 480px; overflow-y: auto;">
+        <table class="table-custom">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Description</th>
+              <th>Category</th>
+              <th class="text-end">Amount</th>
+              <th class="text-center" style="width: 70px;">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if expenses %}
+              {% for exp in expenses %}
+                <tr>
+                  <td class="text-muted small">{{ exp.date }}</td>
+                  <td class="fw-semibold">{{ exp.title }}</td>
+                  <td>
+                    <span class="badge-category">{{ exp.category }}</span>
+                  </td>
+                  <td class="text-end text-danger fw-bold">-₹{{ "{:,.2f}".format(exp.amount) }}</td>
+                  <td class="text-center">
+                    <form method="POST" action="{{ url_for('dashboard.delete_expense', id=exp.id) }}" class="form-delete-confirm m-0">
+                      <button type="submit" class="btn btn-danger-sm" title="Delete record">✕</button>
+                    </form>
+                  </td>
+                </tr>
+              {% endfor %}
+            {% else %}
+              <tr>
+                <td colspan="5" class="text-center py-4 text-muted small">
+                  No expense entries logged yet.
+                </td>
+              </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

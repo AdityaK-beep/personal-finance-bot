@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+finance.db
+*.sqlite3
+.git
+.gitignore
+test_results.log

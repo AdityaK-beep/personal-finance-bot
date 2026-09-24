@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}AI Financial Advisory - Personal Finance Advisor Bot{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+  <div>
+    <h1 class="h2 fw-bold mb-1">AI Financial Advisory</h1>
+    <p class="text-muted small mb-0">Personalized spending behavior analysis, budgeting checks, and 50/30/20 diagnostics.</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('ai.ai_insights_view') }}" class="btn btn-secondary-custom btn-sm d-flex align-items-center gap-2">
+      <span>🔄 Refresh Analysis</span>
+    </a>
+    <a href="{{ url_for('dashboard.dashboard_view') }}" class="btn btn-primary-custom btn-sm">
+      Back to Dashboard
+    </a>
+  </div>
+</div>
+
+<!-- Source Banner -->
+{% if source == 'gemini' %}
+  <div class="alert alert-success-custom d-flex align-items-center gap-3 mb-4">
+    <span style="font-size: 1.4rem;">✨</span>
+    <div>
+      <strong>Powered by Google Gemini 2.5 Flash:</strong>
+      <span class="small d-block text-muted">Analysis synthesized via generative AI trained on empirical budgeting principles.</span>
+    </div>
+  </div>
+{% else %}
+  <div class="alert alert-info-custom d-flex align-items-center gap-3 mb-4">
+    <span style="font-size: 1.4rem;">⚙️</span>
+    <div>
+      <strong>Deterministic Financial Intelligence Active:</strong>
+      <span class="small d-block text-muted">Evaluated using rule-based behavioral heuristics and 50/30/20 allocation mathematics. Configure <code>GEMINI_API_KEY</code> in <code>.env</code> for generative language synthesis.</span>
+    </div>
+  </div>
+{% endif %}
+
+<!-- Financial Snapshot Quick Bar -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="glass-card p-3 text-center">
+      <div class="text-muted small mb-1">Recorded Income</div>
+      <div class="fw-bold text-success fs-5">₹{{ "{:,.2f}".format(data.monthly_income) }}</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="glass-card p-3 text-center">
+      <div class="text-muted small mb-1">Recorded Outflow</div>
+      <div class="fw-bold text-danger fs-5">₹{{ "{:,.2f}".format(data.monthly_expenses) }}</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="glass-card p-3 text-center">
+      <div class="text-muted small mb-1">Net Cash Surplus</div>
+      <div class="fw-bold text-info fs-5">₹{{ "{:,.2f}".format(data.net_balance) }}</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="glass-card p-3 text-center">
+      <div class="text-muted small mb-1">Effective Savings Rate</div>
+      <div class="fw-bold text-warning fs-5">{{ "{:.1f}".format(data.savings_rate) }}%</div>
+    </div>
+  </div>
+</div>
+
+<!-- Main AI Insights Card -->
+<div class="glass-card p-4 p-md-5 mb-4">
+  <div class="d-flex align-items-center justify-content-between pb-3 mb-4 border-bottom border-secondary border-opacity-25">
+    <div class="d-flex align-items-center gap-3">
+      <div class="brand-icon" style="width: 40px; height: 40px; font-size: 1.25rem;">🤖</div>
+      <div>
+        <h2 class="h5 fw-bold mb-0">Advisory Report</h2>
+        <span class="text-muted small">Generated for {{ current_user.username }} &bull; Billing Cycle: {{ data.month_name }} {{ data.year }}</span>
+      </div>
+    </div>
+    <span class="badge {{ 'bg-success' if source == 'gemini' else 'bg-secondary' }} px-3 py-2">
+      {{ 'Gemini 2.5 Flash' if source == 'gemini' else 'Local Heuristic Engine' }}
+    </span>
+  </div>
+
+  <!-- Safe escaped report rendering -->
+  <div class="ai-report-body" style="font-family: 'Inter', monospace, sans-serif;">{{ advice_content }}</div>
+
+  <!-- Advisory Persona Context Note -->
+  <div class="mt-5 pt-4 border-top border-secondary border-opacity-25">
+    <h3 class="h6 fw-bold text-muted text-uppercase mb-2" style="letter-spacing: 0.05em;">Supported Financial Archetypes</h3>
+    <div class="row g-2 text-muted small">
+      <div class="col-12 col-md-6 col-lg-3">
+        <div class="p-2 border border-secondary border-opacity-25 rounded">
+          <strong class="text-light">Salaried Professional</strong>
+          <p class="mb-0 text-subtle" style="font-size: 0.75rem;">Stable income, automated savings, emergency buffer.</p>
+        </div>
+      </div>
+      <div class="col-12 col-md-6 col-lg-3">
+        <div class="p-2 border border-secondary border-opacity-25 rounded">
+          <strong class="text-light">College Student</strong>
+          <p class="mb-0 text-subtle" style="font-size: 0.75rem;">Micro-savings, discretionary leisure & food control.</p>
+        </div>
+      </div>
+      <div class="col-12 col-md-6 col-lg-3">
+        <div class="p-2 border border-secondary border-opacity-25 rounded">
+          <strong class="text-light">Freelancer / Variable</strong>
+          <p class="mb-0 text-subtle" style="font-size: 0.75rem;">Cash flow smoothing, baseline buffer, no fixed assumption.</p>
+        </div>
+      </div>
+      <div class="col-12 col-md-6 col-lg-3">
+        <div class="p-2 border border-secondary border-opacity-25 rounded">
+          <strong class="text-light">Household Manager</strong>
+          <p class="mb-0 text-subtle" style="font-size: 0.75rem;">Category budgeting (groceries, utilities, health).</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
